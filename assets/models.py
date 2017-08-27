@@ -1,6 +1,18 @@
 import re
 import pytz
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
+
+class Transaction:
+    def __init__(self,
+                 amount=None,
+                 venue=None,
+                 category=None,
+                 time=datetime.now().date()):
+        self.amount = amount
+        self.venue = venue
+        self.category = category
+        self.time = time
 
 
 class DateService(object):
@@ -60,4 +72,33 @@ class DateService(object):
         if month is None:
             month = datetime.now().month
         year = datetime.now().year
-        return day, month, year
+        return date(year, month, day)
+
+
+class AmountService(object):
+    __engCutCurr__ = [
+        "uah", "usd", "eur"
+    ]
+    __rusCutCurr__ = [
+        "грн", "дол", "евро"
+    ]
+    __engCurr__ = [
+        "gryvnia", "dollar", "euro"
+    ]
+    __rusCurr__ = [
+        "грив", "доллар", "евро"
+    ]
+
+    def amount(self, text):
+        p_currency = None
+        p_amount = None
+        for i, currency in enumerate(self.__rusCutCurr__):
+            p_amount = re.search(r"(\d+.?\d+)?\s?({}|{}|{}|{})".format(
+                self.__engCurr__[i], self.__engCutCurr__[i],
+                self.__rusCurr__[i], self.__rusCutCurr__[i]
+            ), text)
+            if p_amount.group(2) is not None:
+                p_currency = self.__engCutCurr__[i]
+                text = text.split(p_amount.group(2))[0]
+
+        return p_amount, p_currency
