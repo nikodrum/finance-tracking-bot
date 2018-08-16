@@ -6,14 +6,14 @@ from assets.database import SQLighterTransaction
 app = Flask(__name__)
 
 
-@app.route('/updateToday', method=["POST"])
+@app.route('/updateToday', methods=["POST"])
 def update_today_data():
 
     privat_data = privat_api.get_today()
     db_trns.post_transactions(privat_data)
 
 
-@app.route('/getToday', method=["GET"])
+@app.route('/getToday', methods=["GET"])
 def get_today_data():
     """
 
@@ -25,7 +25,7 @@ def get_today_data():
     return response
 
 
-@app.route('/updateDay/<date>', method=["POST"])
+@app.route('/updateDay/<date>', methods=["POST"])
 def update_date(date):
     """
     Update specific date
@@ -36,7 +36,7 @@ def update_date(date):
     db_trns.post_transactions(privat_data)
 
 
-@app.route('/getDate/<date>/<type>', method=["GET"])
+@app.route('/getDate/<date>/<type>', methods=["GET"])
 def get_date_data(date, data_type="clean"):
     """
     Get specific date

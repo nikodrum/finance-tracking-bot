@@ -1,8 +1,8 @@
 import sqlite3
 import os
 from datetime import datetime
-from assets.cleaner import get_clean_data, DATA_SCHEMA_CLEAN
-from assets.pd_getter import DATA_SCHEMA
+from assets.config import DATA_SCHEMA, DATA_SCHEMA_CLEAN
+from assets.cleaner import get_clean_data
 
 
 def init_database(database_path):

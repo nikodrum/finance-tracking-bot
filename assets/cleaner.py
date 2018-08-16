@@ -1,8 +1,5 @@
 import pandas as pd
-from assets.database import DATA_SCHEMA
-
-DATA_SCHEMA_CLEAN = ['category', 'subcategory', 'trandate', 'trantime', 'amount',
-                     'amount_currency', 'cardamount', 'store']
+from assets.config import DATA_SCHEMA, DATA_SCHEMA_CLEAN
 
 
 def get_clean_data(data):
@@ -21,4 +18,4 @@ def get_clean_data(data):
     clean_data["cardamount"] = expense["@cardamount"].map(lambda row: abs(float(row.split(" ")[0])))
     clean_data["store"] = expense["@terminal"]
 
-    return clean_data
+    return clean_data[DATA_SCHEMA_CLEAN]

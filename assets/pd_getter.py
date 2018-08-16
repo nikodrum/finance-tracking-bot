@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
 from requests import post
 from hashlib import sha1, md5
+from assets.config import DATA_SCHEMA
 import xmltodict
 import pandas as pd
 
 API_URL = "https://api.privatbank.ua/p24api/rest_fiz"
-DATA_SCHEMA = ["@card", "@appcode", "@trandate",
-               "@trantime", "@amount", "@cardamount",
-               "@rest", "@terminal", "@description"]
 
 
 class PrivatBankAPIWrapper:
