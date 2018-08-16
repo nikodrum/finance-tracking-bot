@@ -108,8 +108,8 @@ class PrivatBankAPIWrapper:
             )
             try:
                 data = self.parse_response(raw_data)
-                data = data[(data['@trandate'].astype(str) >= str(start_date)) &
-                            (data['@trandate'].astype(str) < str(end_date))]
+#                 data = data[(data['@trandate'].astype(str) >= str(start_date)) &
+#                             (data['@trandate'].astype(str) < str(end_date))]
             except KeyError:
                 data = pd.DataFrame(columns=DATA_SCHEMA)
 

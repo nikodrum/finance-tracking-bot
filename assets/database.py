@@ -6,7 +6,7 @@ from assets.cleaner import get_clean_data
 
 
 def init_database(database_path):
-    connection = sqlite3.connect(database_path)
+    connection = sqlite3.connect(database_path, check_same_thread=False)
     c = connection.cursor()
 
     c.execute(
@@ -19,7 +19,7 @@ def init_database(database_path):
     c.execute(
         '''CREATE TABLE TransactionsRaw (
                 transaction_id int NOT NULL PRIMARY KEY,
-                pb_id, str,
+                pb_id str,
                 card int,
                 appcode int,
                 trandate str,
@@ -44,7 +44,6 @@ def init_database(database_path):
                 amount_currency str,
                 cardamount float,
                 store str,
-                transaction_id_raw int,
                 FOREIGN KEY (transaction_id) 
                     REFERENCES TransactionsRaw (transaction_id) 
                     ON UPDATE NO ACTION
@@ -67,10 +66,10 @@ def init_database(database_path):
 class SQLighterUser:
     def __init__(self, database_path):
         if os.path.exists(database_path):
-            self.connection = sqlite3.connect(database_path)
+            self.connection = sqlite3.connect(database_path, check_same_thread=False)
         else:
             init_database(database_path=database_path)
-            self.connection = sqlite3.connect(database_path)
+            self.connection = sqlite3.connect(database_path, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
     def select_all_users(self):
@@ -117,10 +116,10 @@ class SQLighterUser:
 class SQLighterTransaction:
     def __init__(self, database_path):
         if os.path.exists(database_path):
-            self.connection = sqlite3.connect(database_path)
+            self.connection = sqlite3.connect(database_path, check_same_thread=False)
         else:
             init_database(database_path=database_path)
-            self.connection = sqlite3.connect(database_path)
+            self.connection = sqlite3.connect(database_path, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
     def get_t_id(self):
@@ -138,19 +137,24 @@ class SQLighterTransaction:
         tr["@pd_id"] = tr["@card"].astype(str) + "_" + tr["@rest"].astype(str)
         for ind in tr.index.tolist():
             with self.connection:
-                t_id = self.get_t_id + 1
+                t_id = self.get_t_id()
+                if t_id: t_id += 1
+                else: t_id = 1
                 self.cursor.execute(
                     """
                     INSERT INTO TransactionsRaw
                     VALUES (?,?,?,?,?,?,?,?,?,?,?)
                     """, (t_id, *(tr.loc[ind, ['pd_id'] + DATA_SCHEMA].values.tolist()))
                 ).fetchall()
-                self.cursor.execute(
-                    """
-                    INSERT INTO Transactions
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                    """, (t_id, datetime.now(), False, *(tr_clean.loc[ind, DATA_SCHEMA_CLEAN].values.tolist()))
-                ).fetchall()
+                try:
+                    self.cursor.execute(
+                        """
+                        INSERT INTO Transactions
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                        """, (t_id, datetime.now(), False, *(tr_clean.loc[ind, DATA_SCHEMA_CLEAN].values.tolist()))
+                    ).fetchall()
+                except KeyError:
+                    pass
                 self.connection.commit()
 
     def get_dates(self, start_date, end_date=None, data_type="clean"):

@@ -22,7 +22,7 @@ def get_today_data():
     """
     update_today_data()
     response = db_trns.get_dates(str(datetime.now().date()))
-    return response
+    return str(response)
 
 
 @app.route('/updateDay/<date>', methods=["POST"])
@@ -36,7 +36,7 @@ def update_date(date):
     db_trns.post_transactions(privat_data)
 
 
-@app.route('/getDate/<date>/<type>', methods=["GET"])
+@app.route('/getDate/<date>/<data_type>', methods=["GET"])
 def get_date_data(date, data_type="clean"):
     """
     Get specific date
@@ -47,7 +47,7 @@ def get_date_data(date, data_type="clean"):
     """
     update_date(date)
     response = db_trns.get_dates(date, data_type)
-    return response
+    return str(response)
 
 
 if __name__ == '__main__':

@@ -4,9 +4,9 @@ from assets.config import DATA_SCHEMA, DATA_SCHEMA_CLEAN
 
 def get_clean_data(data):
 
-    data = data[DATA_SCHEMA].dropna(axis=0).reset_index(drop=True)
+    data = data[DATA_SCHEMA].dropna(axis=0)
 
-    expense = data[data["@amount"].map(lambda row: float(row.split(" ")[0])) < 0]
+    expense = data[data["@cardamount"].map(lambda row: float(row.split(" ")[0])) < 0]
 
     clean_data = pd.DataFrame()
     clean_data["category"] = expense["@description"].map(lambda row: row.split(":")[0])
