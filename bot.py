@@ -1,14 +1,12 @@
-import os
 import time
 from argparse import ArgumentParser
 
 import telebot
 from assets.config import *
-from assets.database import SQLighter
+from assets.database import SQLighterUser
 from assets.loggers import logger
-from assets.models import *
+from assets.models_bot import *
 from flask import Flask, request
-
 
 TOKEN = os.environ['BOT_TOKEN']
 
@@ -117,7 +115,7 @@ def internal_error(exception):
 
 
 def validated_user_id(u_id):
-    db_worker = SQLighter(database="bot.db")
+    db_worker = SQLighterUser(database_path="./data/bot.db")
 
     if int(u_id) not in db_worker.get_allowed_users():
         bot.send_message(
@@ -147,6 +145,7 @@ def _setup(application):
         application.logger.addHandler(hdlr)
 
     return app
+
 
 if __name__ == '__main__':
 
