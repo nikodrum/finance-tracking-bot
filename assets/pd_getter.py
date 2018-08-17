@@ -97,7 +97,7 @@ class PrivatBankAPIWrapper:
         if end_date:
             end_date = datetime.strptime(str(end_date)[:10], "%Y-%m-%d")
         else:
-            end_date = start_date
+            end_date = (start_date + timedelta(days=1)).date()
 
         for config in self.configs:
 
@@ -108,8 +108,8 @@ class PrivatBankAPIWrapper:
             )
             try:
                 data = self.parse_response(raw_data)
-#                 data = data[(data['@trandate'].astype(str) >= str(start_date)) &
-#                             (data['@trandate'].astype(str) < str(end_date))]
+                data = data[(data['@trandate'] >= str(start_date)) &
+                            (data['@trandate'] < str(end_date))]
             except KeyError:
                 data = pd.DataFrame(columns=DATA_SCHEMA)
 
