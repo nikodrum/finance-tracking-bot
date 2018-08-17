@@ -1,6 +1,18 @@
+import os
 import re
+import requests
 import pytz
 from datetime import datetime, timedelta, date
+from assets.loggers import logger
+
+
+def send_notification(message, user_id=163440579):
+    response = requests.get(
+        url="https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}".format(
+            os.getenv("BOT_TOKEN"), user_id, message
+        )
+    )
+    logger.info("Message status {}.".format(response.status_code))
 
 
 class Transaction:

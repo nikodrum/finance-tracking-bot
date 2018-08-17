@@ -15,3 +15,8 @@ DATA_SCHEMA_CLEAN = ['category', 'subcategory', 'trandate', 'trantime', 'amount'
 DATA_SCHEMA = ["@card", "@appcode", "@trandate",
                "@trantime", "@amount", "@cardamount",
                "@rest", "@terminal", "@description"]
+
+PRIVAT_API = "https://api.privatbank.ua/p24api/rest_fiz"
+# PRIVAT_API = "http://localhost:5010/api/example"
+
+SERVER_API = "http://localhost:5005"

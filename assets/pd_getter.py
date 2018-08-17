@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 from requests import post
 from hashlib import sha1, md5
-from assets.config import DATA_SCHEMA
+from assets.config import DATA_SCHEMA, PRIVAT_API
 import xmltodict
 import pandas as pd
-
-API_URL = "https://api.privatbank.ua/p24api/rest_fiz"
 
 
 class PrivatBankAPIWrapper:
@@ -44,7 +42,7 @@ class PrivatBankAPIWrapper:
             config["card_number"]
         )
 
-        res = post(API_URL, data=r_xml, headers={'Content-Type': 'application/xml; charset=UTF-8'})
+        res = post(PRIVAT_API, data=r_xml, headers={'Content-Type': 'application/xml; charset=UTF-8'})
         dict_response = xmltodict.parse(res.content.decode())
         return dict_response
 
@@ -92,12 +90,12 @@ class PrivatBankAPIWrapper:
 
     def get_dates(self, start_date, end_date=None):
         response = pd.DataFrame(columns=DATA_SCHEMA)
-        start_date = datetime.strptime(str(start_date)[:10], "%Y-%m-%d")
+        start_date = datetime.strptime(str(start_date)[:10], "%Y-%m-%d").date()
 
         if end_date:
             end_date = datetime.strptime(str(end_date)[:10], "%Y-%m-%d")
         else:
-            end_date = (start_date + timedelta(days=1)).date()
+            end_date = (start_date + timedelta(days=1))
 
         for config in self.configs:
 
