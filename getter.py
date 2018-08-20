@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from flask import Flask, Response
+from flask import Flask, Response, request
 from assets.cleaner import get_clean_data
 from assets.database import SQLighterTransaction
 from assets.loggers import logger
@@ -80,6 +80,17 @@ def get_dates_data(start_date, end_date, data_type="clean"):
     return str((len(response), [i[5] for i in response]))
 
 
+@app.after_request
+def after_request(response):
+    app.logger.info('%s %s %s %s %s',
+                     request.remote_addr,
+                     request.method,
+                     request.scheme,
+                     request.full_path,
+                     response.status)
+    return response
+
+
 if __name__ == '__main__':
 
     with open("configs.json", "r") as f:
@@ -88,4 +99,4 @@ if __name__ == '__main__':
     privat_api = PrivatBankAPIWrapper(configs=configs)
     db_trns = SQLighterTransaction("./data/bot.db")
 
-    app.run(debug=True, port=5005)
+    app.run(debug=True, port=5005, host="0.0.0.0")

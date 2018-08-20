@@ -1,4 +1,5 @@
 import requests
+import time
 from assets.loggers import logger
 from assets.config import SERVER_API
 from assets.models_bot import send_notification
@@ -15,7 +16,7 @@ def run_script():
             logger.info("Automatic update of {}.".format(day))
             requests.post(SERVER_API + "/updateDay/{}".format(day))
             send_notification("Update successful for {}.".format(day))
-
+        time.sleep(3600)
 
 if __name__ == "__main__":
     logger.info("Automatic update script started.")
