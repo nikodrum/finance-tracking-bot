@@ -1,6 +1,7 @@
 import json
 import hmac
 import os
+import dropbox
 from datetime import datetime
 from flask import Flask, Response, request, abort
 from hashlib import sha256
@@ -13,6 +14,7 @@ app = Flask(__name__)
 del app.logger.handlers[:]
 for hdlr in logger.handlers:
     app.logger.addHandler(hdlr)
+dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
 
 
 @app.route('/updateDay/<date>', methods=["POST"])
@@ -106,19 +108,20 @@ def challenge():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Receive a list of changed user IDs from Dropbox and process each."""
 
-    # Make sure this is a valid request from Dropbox
-    signature = request.headers.get('X-Dropbox-Signature').encode("utf-8")
-    if not hmac.compare_digest(signature,
-                               hmac.new(os.environ['DROP_APPSECRET'],
-                                        request.data,
-                                        sha256).hexdigest()):
-        abort(403)
+    for account in json.loads(request.data.decode("utf-8"))['list_folder']['accounts']:
+        files = dbx.files_list_folder('/cache')
+        files_diff = (max([file.server_modified for file in files.entries]) -
+                      min([file.server_modified for file in files.entries])).total_seconds() / 60
+        today_diff = (datetime.now() -
+                      max([file.server_modified for file in files.entries])).total_seconds() / 60
+        print(datetime.now(),
+              max([file.server_modified for file in files.entries]))
+        if files_diff < 2 and today_diff < 5:
+            md, res = dbx.files_download("/cache/long.csv")
+            print(res.content.eccode("utf-8"))
+    return ""
 
-    for account in json.loads(request.data)['list_folder']['accounts']:
-        print(account)
-    return ''
 
 
 if __name__ == '__main__':
