@@ -1,11 +1,13 @@
 import json
+import hmac
+import os
 from datetime import datetime
-from flask import Flask, Response, request
+from flask import Flask, Response, request, abort
+from hashlib import sha256
 from assets.cleaner import get_clean_data
 from assets.database import SQLighterTransaction
 from assets.loggers import logger
 from assets.pd_getter import PrivatBankAPIWrapper
-
 
 app = Flask(__name__)
 del app.logger.handlers[:]
@@ -83,16 +85,43 @@ def get_dates_data(start_date, end_date, data_type="clean"):
 @app.after_request
 def after_request(response):
     app.logger.info('%s %s %s %s %s',
-                     request.remote_addr,
-                     request.method,
-                     request.scheme,
-                     request.full_path,
-                     response.status)
+                    request.remote_addr,
+                    request.method,
+                    request.scheme,
+                    request.full_path,
+                    response.status)
     return response
 
 
-if __name__ == '__main__':
+@app.route('/webhook', methods=['GET'])
+def challenge():
+    """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
 
+    resp = Response(request.args.get('challenge'))
+    resp.headers['Content-Type'] = 'text/plain'
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+
+    return resp
+
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    """Receive a list of changed user IDs from Dropbox and process each."""
+
+    # Make sure this is a valid request from Dropbox
+    signature = request.headers.get('X-Dropbox-Signature').encode("utf-8")
+    if not hmac.compare_digest(signature,
+                               hmac.new(os.environ['DROP_APPSECRET'],
+                                        request.data,
+                                        sha256).hexdigest()):
+        abort(403)
+
+    for account in json.loads(request.data)['list_folder']['accounts']:
+        print(account)
+    return ''
+
+
+if __name__ == '__main__':
     with open("configs.json", "r") as f:
         configs = json.load(f)
 
