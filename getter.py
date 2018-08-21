@@ -1,20 +1,19 @@
 import json
-import hmac
 import os
 import dropbox
+import traceback
 from datetime import datetime
-from flask import Flask, Response, request, abort
-from hashlib import sha256
-from assets.cleaner import get_clean_data
+from flask import Flask, Response, request
+from assets.cleaner import get_clean_pb_data
 from assets.database import SQLighterTransaction
 from assets.loggers import logger
 from assets.pd_getter import PrivatBankAPIWrapper
+from assets.models_bot import send_notification
 
 app = Flask(__name__)
 del app.logger.handlers[:]
 for hdlr in logger.handlers:
     app.logger.addHandler(hdlr)
-dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
 
 
 @app.route('/updateDay/<date>', methods=["POST"])
@@ -53,7 +52,7 @@ def get_today_data():
              ["date", "type", ...]
     """
     privat_data = privat_api.get_today()
-    response = get_clean_data(privat_data).to_records().tolist()
+    response = get_clean_pb_data(privat_data).to_records().tolist()
     return str(response)
 
 
@@ -95,6 +94,18 @@ def after_request(response):
     return response
 
 
+@app.errorhandler(Exception)
+def exceptions(e):
+    tb = traceback.format_exc()
+    logger.error('%s %s %s %s 5xx INTERNAL SERVER ERROR\n%s',
+                 request.remote_addr,
+                 request.method,
+                 request.scheme,
+                 request.full_path,
+                 tb)
+    return "Internal Server Error", 500
+
+
 @app.route('/webhook', methods=['GET'])
 def challenge():
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
@@ -108,20 +119,20 @@ def challenge():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-
     for account in json.loads(request.data.decode("utf-8"))['list_folder']['accounts']:
         files = dbx.files_list_folder('/cache')
         files_diff = (max([file.server_modified for file in files.entries]) -
                       min([file.server_modified for file in files.entries])).total_seconds() / 60
         today_diff = (datetime.now() -
                       max([file.server_modified for file in files.entries])).total_seconds() / 60
-        print(datetime.now(),
-              max([file.server_modified for file in files.entries]))
         if files_diff < 2 and today_diff < 5:
             md, res = dbx.files_download("/cache/long.csv")
-            print(res.content.eccode("utf-8"))
+            db_trns.post_transactions(
+                tr=res.content.decode("utf-8"),
+                source="monobank"
+            )
+        send_notification("Done with monobank transctions.")
     return ""
-
 
 
 if __name__ == '__main__':
@@ -130,5 +141,6 @@ if __name__ == '__main__':
 
     privat_api = PrivatBankAPIWrapper(configs=configs)
     db_trns = SQLighterTransaction("./data/bot.db")
+    dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
 
     app.run(debug=True, port=5005, host="0.0.0.0")
