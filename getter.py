@@ -121,17 +121,18 @@ def challenge():
 def webhook():
     for account in json.loads(request.data.decode("utf-8"))['list_folder']['accounts']:
         files = dbx.files_list_folder('/cache')
-        files_diff = (max([file.server_modified for file in files.entries]) -
-                      min([file.server_modified for file in files.entries])).total_seconds() / 60
-        today_diff = (datetime.now() -
-                      max([file.server_modified for file in files.entries])).total_seconds() / 60
-        if files_diff < 2 and today_diff < 5:
-            md, res = dbx.files_download("/cache/long.csv")
-            db_trns.post_transactions(
-                tr=res.content.decode("utf-8"),
-                source="monobank"
-            )
-        send_notification("Done with monobank transctions.")
+        if len(files.entries) == 4:
+            files_diff = (max([file.server_modified for file in files.entries]) -
+                          min([file.server_modified for file in files.entries])).total_seconds() / 60
+            today_diff = (datetime.now() -
+                          max([file.server_modified for file in files.entries])).total_seconds() / 60
+            if files_diff < 2 and today_diff < 5:
+                md, res = dbx.files_download("/cache/long.csv")
+                db_trns.post_transactions(
+                    tr=res.content.decode("utf-8"),
+                    source="monobank"
+                )
+            send_notification("Done with monobank transactions.")
     return ""
 
 
