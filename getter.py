@@ -2,6 +2,7 @@ import json
 import os
 import dropbox
 import traceback
+import pygsheets
 from datetime import datetime
 from flask import Flask, Response, request
 from assets.cleaner import get_clean_pb_data
@@ -42,6 +43,28 @@ def update_dates(start_date, end_date):
         datetime.strptime(end_date, "%Y-%m-%d")
     )
     db_trns.post_transactions(privat_data)
+    return Response(status=200)
+
+
+@app.route('/updateFOPDates/<start_date>/<end_date>', methods=["POST"])
+def update_fop_dates(start_date, end_date):
+    """
+    Update FOP specific date
+    :param start_date: "YYYY-mm-dd"
+    :param end_date: "YYYY-mm-dd"
+    :return: None
+    """
+    privat_data = privatbank_fop.get_dates(
+        datetime.strptime(start_date, "%Y-%m-%d"),
+        datetime.strptime(end_date, "%Y-%m-%d")
+    )
+    worksheet = sheets[7]
+
+    worksheet.update_cells(
+        crange='A{}'.format(worksheet.rows + 1),
+        values=privat_data.values.tolist(),
+        extend=True
+    )
     return Response(status=200)
 
 
@@ -139,9 +162,17 @@ if __name__ == '__main__':
     with open("./credentials/privatbank.json", "r") as f:
         configs = json.load(f)
 
+    with open("./credentials/privatbank_fop.json", "r") as f:
+        configs_fop = json.load(f)
+
     privatbank = PrivatBankAPIWrapper(configs=configs)
+    privatbank_fop = PrivatBankAPIWrapper(configs=configs_fop)
     gmail = GmailAPIWrapper()
     db_trns = SQLighterTransaction("./data/bot.db")
     dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
+    google_sh = pygsheets.authorize(
+        service_file='../credentials/googlesheets.json'
+    )
+    sheets = google_sh.open_by_key(os.getenv("GG_SHEET_KEY"))
 
     app.run(debug=True, port=5005, host="0.0.0.0")

@@ -22,6 +22,15 @@ def get_clean_pb_data(data):
     return clean_data[DATA_SCHEMA_CLEAN]
 
 
+def get_clean_pb_fop_data(data):
+
+    data["@amount"] = data["@amount"].map(lambda row: abs(float(row.split(" ")[0])))
+    data["@amount_currency"] = data["@amount"].map(lambda row: row.split(" ")[-1])
+    data["@cardamount"] = data["@cardamount"].map(lambda row: abs(float(row.split(" ")[0])))
+
+    return data
+
+
 def get_clean_mono_data(data):
 
     data['@amount'] = data["@amount"].map(lambda r: r.split(" ")[0]).astype(float)
