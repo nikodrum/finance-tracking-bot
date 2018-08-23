@@ -25,14 +25,16 @@ class GmailAPIWrapper(object):
         self.m_id = None
 
     def get_unread_message_list(self):
-
-        return self.service.users() \
-            .messages() \
-            .list(
-            userId=self.user_id,
-            labelIds=[self.LABEL_INBOX,
-                      self.LABEL_UNREAD]
-        ).execute()['messages']
+        try:
+            return self.service.users() \
+                .messages() \
+                .list(
+                userId=self.user_id,
+                labelIds=[self.LABEL_INBOX,
+                          self.LABEL_UNREAD]
+            ).execute()['messages']
+        except KeyError:
+            pass
 
     def get_message_by_id(self, m_id):
         return self.service.users().messages() \
@@ -41,7 +43,8 @@ class GmailAPIWrapper(object):
     def get_message_from(self, email):
 
         mssg_list = self.get_unread_message_list()
-
+        if not mssg_list:
+            return None
         for mssg in mssg_list:
 
             m_id = mssg['id']
