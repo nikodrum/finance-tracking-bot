@@ -124,11 +124,12 @@ def webhook():
         cache_files = dbx.files_list_folder('/cache').entries
         if len(cache_files) > 0:
             res = gmail.get_mono_trs()
-            db_trns.post_transactions(
-                tr=res,
-                source="monobank"
-            )
-            send_notification("Done with monobank transactions.")
+            if res:
+                db_trns.post_transactions(
+                    tr=res,
+                    source="monobank"
+                )
+                send_notification("Done with monobank transactions.")
             for file in cache_files:
                 dbx.files_delete_v2(file.path_display)
     return ""
