@@ -1,10 +1,9 @@
 import sqlite3
 import os
 from datetime import datetime
-from assets.config import DATA_SCHEMA, DATA_SCHEMA_CLEAN
 from assets.loggers import logger
 from assets.cleaner import *
-from assets.database_init import database_init
+from database.config import db_init
 
 
 class SQLighterUser:
@@ -12,7 +11,7 @@ class SQLighterUser:
         if os.path.exists(database_path):
             self.connection = sqlite3.connect(database_path, check_same_thread=False)
         else:
-            database_init(database_path=database_path)
+            db_init(database_path=database_path)
             self.connection = sqlite3.connect(database_path, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
@@ -62,7 +61,7 @@ class SQLighterTransaction:
         if os.path.exists(database_path):
             self.connection = sqlite3.connect(database_path, check_same_thread=False)
         else:
-            database_init(database_path=database_path)
+            db_init(database_path=database_path)
             self.connection = sqlite3.connect(database_path, check_same_thread=False)
         self.cursor = self.connection.cursor()
 

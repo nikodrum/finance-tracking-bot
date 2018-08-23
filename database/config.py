@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 
 
-def database_init(database_path):
+def db_init(database_path):
     connection = sqlite3.connect(database_path, check_same_thread=False)
     c = connection.cursor()
 

@@ -5,9 +5,10 @@ import traceback
 from datetime import datetime
 from flask import Flask, Response, request
 from assets.cleaner import get_clean_pb_data
-from assets.database import SQLighterTransaction
+from database.wrappers import SQLighterTransaction
 from assets.loggers import logger
-from assets.pd_getter import PrivatBankAPIWrapper
+from apis.privatbank import PrivatBankAPIWrapper
+from apis.gmail import GmailAPIWrapper
 from assets.models_bot import send_notification
 
 app = Flask(__name__)
@@ -23,7 +24,7 @@ def update_day(date):
     :param date: "YYYY-mm-dd"
     :return: None
     """
-    privat_data = privat_api.get_dates(datetime.strptime(date, "%Y-%m-%d"))
+    privat_data = privatbank.get_dates(datetime.strptime(date, "%Y-%m-%d"))
     db_trns.post_transactions(privat_data)
     return Response(status=200)
 
@@ -36,7 +37,7 @@ def update_dates(start_date, end_date):
     :param end_date: "YYYY-mm-dd"
     :return: None
     """
-    privat_data = privat_api.get_dates(
+    privat_data = privatbank.get_dates(
         datetime.strptime(start_date, "%Y-%m-%d"),
         datetime.strptime(end_date, "%Y-%m-%d")
     )
@@ -51,7 +52,7 @@ def get_today_data():
     :return: list of tuples
              ["date", "type", ...]
     """
-    privat_data = privat_api.get_today()
+    privat_data = privatbank.get_today()
     response = get_clean_pb_data(privat_data).to_records().tolist()
     return str(response)
 
@@ -120,27 +121,25 @@ def challenge():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     for account in json.loads(request.data.decode("utf-8"))['list_folder']['accounts']:
-        files = dbx.files_list_folder('/cache')
-        if len(files.entries) == 4:
-            files_diff = (max([file.server_modified for file in files.entries]) -
-                          min([file.server_modified for file in files.entries])).total_seconds() / 60
-            today_diff = (datetime.now() -
-                          max([file.server_modified for file in files.entries])).total_seconds() / 60
-            if files_diff < 2 and today_diff < 5:
-                md, res = dbx.files_download("/cache/long.csv")
-                db_trns.post_transactions(
-                    tr=res.content.decode("utf-8"),
-                    source="monobank"
-                )
+        cache_files = dbx.files_list_folder('/cache').entries
+        if len(cache_files) > 0:
+            res = gmail.get_mono_trs()
+            db_trns.post_transactions(
+                tr=res,
+                source="monobank"
+            )
             send_notification("Done with monobank transactions.")
+            for file in cache_files:
+                dbx.files_delete_v2(file.path)
     return ""
 
 
 if __name__ == '__main__':
-    with open("configs.json", "r") as f:
+    with open("./credentials/privatbank.json", "r") as f:
         configs = json.load(f)
 
-    privat_api = PrivatBankAPIWrapper(configs=configs)
+    privatbank = PrivatBankAPIWrapper(configs=configs)
+    gmail = GmailAPIWrapper()
     db_trns = SQLighterTransaction("./data/bot.db")
     dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
 

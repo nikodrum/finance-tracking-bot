@@ -20,3 +20,7 @@ PRIVAT_API = "https://api.privatbank.ua/p24api/rest_fiz"
 # PRIVAT_API = "http://localhost:5010/api/example"
 
 SERVER_API = "http://localhost:5005"
+
+CLIENT_SECRET_FILE = './credentials/google.json'
+SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
+APPLICATION_NAME = "finance-tracking-system"

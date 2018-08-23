@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 
 import telebot
 from assets.config import *
-from assets.database import SQLighterUser
-from assets.loggers import logger
+from database.wrappers import SQLighterUser
 from assets.models_bot import *
 from flask import Flask, request
 
