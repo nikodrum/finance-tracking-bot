@@ -171,7 +171,7 @@ if __name__ == '__main__':
     db_trns = SQLighterTransaction("./data/bot.db")
     dbx = dropbox.Dropbox(os.getenv("DROP_AUTHTOKEN"))
     google_sh = pygsheets.authorize(
-        service_file='../credentials/googlesheets.json'
+        service_file='./credentials/googlesheets.json'
     )
     sheets = google_sh.open_by_key(os.getenv("GG_SHEET_KEY"))
 

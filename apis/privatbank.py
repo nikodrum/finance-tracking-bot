@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from requests import post
 from hashlib import sha1, md5
 from assets.config import DATA_SCHEMA, PRIVAT_API
+from assets.loggers import logger
 import xmltodict
 import pandas as pd
 
@@ -13,10 +14,14 @@ class PrivatBankAPIWrapper:
 
     @staticmethod
     def parse_response(response):
-        data_list = [tr for tr in response["response"]["data"]["info"]["statements"]["statement"]]
-        response = pd.DataFrame.from_dict(data_list).drop_duplicates()
-        if 0 not in response.columns:
-            return response
+        try:
+            data_list = [tr for tr in response["response"]["data"]["info"]["statements"]["statement"]]
+            response = pd.DataFrame.from_dict(data_list).drop_duplicates()
+            if 0 not in response.columns:
+                return response
+        except (TypeError, KeyError):
+            logger.error("Got response {} \n\n which CAN NOT be parsed.".format(response))
+            return None
 
     @staticmethod
     def format_date(date_str):
@@ -61,7 +66,7 @@ class PrivatBankAPIWrapper:
             try:
                 data = self.parse_response(raw_data)
                 data = data[data['@trandate'] == str(datetime.now().date())]
-            except KeyError:
+            except Exception:
                 data = pd.DataFrame(columns=DATA_SCHEMA)
 
             response = response.append(data)
