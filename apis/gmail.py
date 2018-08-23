@@ -77,14 +77,15 @@ class GmailAPIWrapper(object):
         self.m_id = self.get_message_from("info@monobank.com.ua")
         if self.m_id:
             message = self.get_message_by_id(self.m_id)
-            trs = self.get_attachment(message, 'long.csv')
-            if trs:
-                self.service.users().messages() \
-                    .modify(userId=self.user_id,
-                            id=self.m_id,
-                            body={'removeLabelIds': ['UNREAD']}
-                            ).execute()
-                return trs
+            if message:
+                trs = self.get_attachment(message, 'long.csv')
+                if trs:
+                    self.service.users().messages() \
+                        .modify(userId=self.user_id,
+                                id=self.m_id,
+                                body={'removeLabelIds': ['UNREAD']}
+                                ).execute()
+                    return trs
             logger.info("File not found in message.")
             return None
         logger.info("Message not found")
