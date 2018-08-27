@@ -152,6 +152,7 @@ class SQLighterTransaction:
                             """, (t_id, datetime.now(), False,
                                   *(tr_clean.loc[ind, DATA_SCHEMA_CLEAN].values.tolist()))
                         ).fetchall()
+                        c += 1
                     self.connection.commit()
         logger.info("Done {} transactions from PRIVATBANK. All transaction num = {}.".format(
             c, tr.index.shape[0]
