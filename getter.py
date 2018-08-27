@@ -26,7 +26,8 @@ def update_day(date):
     :return: None
     """
     privat_data = privatbank.get_dates(datetime.strptime(date, "%Y-%m-%d"))
-    db_trns.post_transactions(privat_data)
+    if privat_data.shape[0] > 0:
+        db_trns.post_transactions(privat_data)
     return Response(status=200)
 
 
@@ -42,7 +43,8 @@ def update_dates(start_date, end_date):
         datetime.strptime(start_date, "%Y-%m-%d"),
         datetime.strptime(end_date, "%Y-%m-%d")
     )
-    db_trns.post_transactions(privat_data)
+    if privat_data.shape[0] > 0:
+        db_trns.post_transactions(privat_data)
     return Response(status=200)
 
 
