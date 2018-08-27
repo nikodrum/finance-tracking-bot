@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime as dt, timedelta
 from requests import post
 from hashlib import sha1, md5
 from assets.config import DATA_SCHEMA, PRIVAT_API
@@ -25,7 +25,7 @@ class PrivatBankAPIWrapper:
 
     @staticmethod
     def format_date(date_str):
-        return datetime.strftime(date_str, "%d.%m.%Y")
+        return dt.strftime(date_str, "%d.%m.%Y")
 
     @staticmethod
     def get_operations(config, start_date, end_date):
@@ -53,11 +53,13 @@ class PrivatBankAPIWrapper:
 
     def get_today(self):
         response = pd.DataFrame(columns=DATA_SCHEMA)
-        start_date = datetime.now().date()
-        end_date = (datetime.now() + timedelta(days=1)).date()
+        start_date = dt.now().date()
+        end_date = (dt.now() + timedelta(days=1)).date()
 
         for config in self.configs:
 
+            if config["start_date"] > str(start_date):
+                continue
             raw_data = self.get_operations(
                 config=config,
                 start_date=self.format_date(start_date),
@@ -65,7 +67,7 @@ class PrivatBankAPIWrapper:
             )
             try:
                 data = self.parse_response(raw_data)
-                data = data[data['@trandate'] == str(datetime.now().date())]
+                data = data[data['@trandate'] == str(dt.now().date())]
             except Exception:
                 data = pd.DataFrame(columns=DATA_SCHEMA)
 
@@ -74,11 +76,13 @@ class PrivatBankAPIWrapper:
 
     def get_yesterday(self):
         response = pd.DataFrame(columns=DATA_SCHEMA)
-        start_date = (datetime.now() - timedelta(days=1)).date()
-        end_date = datetime.now().date()
+        start_date = (dt.now() - timedelta(days=1)).date()
+        end_date = dt.now().date()
 
         for config in self.configs:
 
+            if config["start_date"] > str(start_date):
+                continue
             raw_data = self.get_operations(
                 config=config,
                 start_date=self.format_date(start_date),
@@ -95,15 +99,19 @@ class PrivatBankAPIWrapper:
 
     def get_dates(self, start_date, end_date=None):
         response = pd.DataFrame(columns=DATA_SCHEMA)
-        start_date = datetime.strptime(str(start_date)[:10], "%Y-%m-%d").date()
+        start_date = dt.strptime(str(start_date)[:10], "%Y-%m-%d").date()
 
         if end_date:
-            end_date = datetime.strptime(str(end_date)[:10], "%Y-%m-%d")
+            end_date = dt.strptime(str(end_date)[:10], "%Y-%m-%d")
         else:
             end_date = (start_date + timedelta(days=1))
 
         for config in self.configs:
 
+            if config["start_date"] > str(start_date):
+                continue
+            elif config["start_date"] <= str(end_date):
+                start_date = dt.strptime(config["start_date"], "%Y-%m-%d").date()
             raw_data = self.get_operations(
                 config=config,
                 start_date=self.format_date(start_date),
