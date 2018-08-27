@@ -110,8 +110,6 @@ class PrivatBankAPIWrapper:
 
             if config["start_date"] > str(start_date):
                 continue
-            elif config["start_date"] <= str(end_date):
-                start_date = dt.strptime(config["start_date"], "%Y-%m-%d").date()
             raw_data = self.get_operations(
                 config=config,
                 start_date=self.format_date(start_date),
